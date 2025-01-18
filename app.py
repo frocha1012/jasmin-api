@@ -82,15 +82,15 @@ def fetch_data_for_party_key(party_key):
         if response.status_code == 200:
             full_data = response.json()
             limited_data = {
-                "_id": full_data.get("_id"),
-                "Name": full_data.get("Name"),
-                "Email": full_data.get("Email"),
-                "Mobile": full_data.get("Mobile"),
-                "CompanyTaxID": full_data.get("CompanyTaxID"),
-                "StreetName": full_data.get("StreetName"),
-                "PostalZone": full_data.get("PostalZone"),
-                "CityName": full_data.get("CityName"),
-                "Country": full_data.get("Country"),
+                "_id": full_data.get("partyKey"),
+                "Name": full_data.get("name"),
+                "Email": full_data.get("email"),
+                "Mobile": full_data.get("mobile"),
+                "CompanyTaxID": full_data.get("companyTaxID"),
+                "StreetName": full_data.get("streetName"),
+                "PostalZone": full_data.get("postalZone"),
+                "CityName": full_data.get("cityName"),
+                "Country": full_data.get("country"),
             }
             return jsonify(limited_data)
         else:
