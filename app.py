@@ -74,7 +74,7 @@ def fetch_all_data():
             if party_response.status_code == 200:
                 full_data = party_response.json()
                 limited_data = {
-                    "_id": full_data.get("_id"),
+                    "ID": full_data.get("partyKey"),
                     "Name": full_data.get("name"),
                     "Email": full_data.get("email"),
                     "Mobile": full_data.get("mobile"),
