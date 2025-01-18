@@ -76,7 +76,7 @@ def fetch_all_data():
                 limited_data = {
                     "ID": full_data.get("partyKey"),
                     "Name": full_data.get("name"),
-                    "Email": full_data.get("email"),
+                    "Email": full_data.get("electronicMail"),
                     "Mobile": full_data.get("mobile"),
                     "CompanyTaxID": full_data.get("companyTaxID"),
                     "StreetName": full_data.get("streetName"),
