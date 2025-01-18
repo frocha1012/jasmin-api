@@ -56,7 +56,7 @@ def get_access_token():
 
 # Route to Fetch All Data (products) Automatically
 @app.route('/fetch_all_products', methods=['GET'])
-def fetch_all_data():
+def fetch_all_products():
     try:
         # Get the access token
         token = get_access_token()
