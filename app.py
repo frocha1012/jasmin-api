@@ -47,54 +47,47 @@ def get_access_token():
     except requests.exceptions.RequestException as e:
         raise Exception(f"An error occurred while fetching the token: {e}")
 
-# Route to Fetch All Party Keys
-@app.route('/fetch_party_keys', methods=['GET'])
-def fetch_all_party_keys():
+# Route to Fetch All Data Automatically
+@app.route('/fetch_all_data', methods=['GET'])
+def fetch_all_data():
     try:
+        # Get the access token
         token = get_access_token()
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         }
 
+        # Step 1: Fetch all party keys
         response = requests.get(ENDPOINT_ODATA, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            party_keys = [item.get("partyKey") for item in data.get("items", []) if "partyKey" in item]
-            return jsonify({"partyKeys": party_keys})
-        else:
+        if response.status_code != 200:
             return jsonify({"error": response.text}), response.status_code
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-# Route to Fetch Data for a Specific Party Key
-@app.route('/fetch_party_data/<party_key>', methods=['GET'])
-def fetch_data_for_party_key(party_key):
-    try:
-        token = get_access_token()
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
+        data = response.json()
+        party_keys = [item.get("partyKey") for item in data.get("items", []) if "partyKey" in item]
 
-        specific_url = f"{ENDPOINT_PARTY_KEY}/{party_key}"
-        response = requests.get(specific_url, headers=headers)
-        if response.status_code == 200:
-            full_data = response.json()
-            limited_data = {
-                "_id": full_data.get("partyKey"),
-                "Name": full_data.get("name"),
-                "Email": full_data.get("email"),
-                "Mobile": full_data.get("mobile"),
-                "CompanyTaxID": full_data.get("companyTaxID"),
-                "StreetName": full_data.get("streetName"),
-                "PostalZone": full_data.get("postalZone"),
-                "CityName": full_data.get("cityName"),
-                "Country": full_data.get("country"),
-            }
-            return jsonify(limited_data)
-        else:
-            return jsonify({"error": response.text}), response.status_code
+        # Step 2: Fetch data for each party key
+        all_data = []
+        for party_key in party_keys:
+            specific_url = f"{ENDPOINT_PARTY_KEY}/{party_key}"
+            party_response = requests.get(specific_url, headers=headers)
+            if party_response.status_code == 200:
+                full_data = party_response.json()
+                limited_data = {
+                    "_id": full_data.get("_id"),
+                    "Name": full_data.get("name"),
+                    "Email": full_data.get("email"),
+                    "Mobile": full_data.get("mobile"),
+                    "CompanyTaxID": full_data.get("companyTaxID"),
+                    "StreetName": full_data.get("streetName"),
+                    "PostalZone": full_data.get("postalZone"),
+                    "CityName": full_data.get("cityName"),
+                    "Country": full_data.get("country"),
+                }
+                all_data.append(limited_data)
+
+        return jsonify(all_data)
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
