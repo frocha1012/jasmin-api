@@ -80,7 +80,7 @@ def fetch_all_products():
             item_response = requests.get(specific_url, headers=headers)
             if item_response.status_code == 200:
                 full_data = item_response.json()
-                
+
                 # Filter by 'locked' status
                 if full_data.get("locked") is False:
                     limited_data = {
@@ -89,7 +89,11 @@ def fetch_all_products():
                         "Image": full_data.get("image"),
                         "ImageThumbnail": full_data.get("imageThumbnail"),
                         "Brand": full_data.get("brand"),
-                        "BrandModel": full_data.get("brandModel")
+                        "BrandModel": full_data.get("brandModel"),
+                        "Price": next(
+                            (line.get("priceAmount", {}).get("amount") for line in full_data.get("priceListLines", []) if "priceAmount" in line),
+                            None  # Default to None if no "amount" is found
+                        )
                     }
                     all_data.append(limited_data)
 
