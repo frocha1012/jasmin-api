@@ -86,6 +86,7 @@ def fetch_all_products():
                     limited_data = {
                         "ID": full_data.get("itemKey"),
                         "Description": full_data.get("description"),
+                        "Complementary Description": full_data.get("complementaryDescription"),
                         "Image": full_data.get("image"),
                         "ImageThumbnail": full_data.get("imageThumbnail"),
                         "Brand": full_data.get("brand"),
