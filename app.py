@@ -80,15 +80,18 @@ def fetch_all_products():
             item_response = requests.get(specific_url, headers=headers)
             if item_response.status_code == 200:
                 full_data = item_response.json()
-                limited_data = {
-                    "ID": full_data.get("itemKey"),
-                    "Description": full_data.get("description"),
-                    "Image": full_data.get("image"),
-                    "ImageThumbnail": full_data.get("imageThumbnail"),
-                    "Brand": full_data.get("brand"),
-                    "BrandModel": full_data.get("brandModel")
-                }
-                all_data.append(limited_data)
+                
+                # Filter by 'locked' status
+                if full_data.get("locked") is False:
+                    limited_data = {
+                        "ID": full_data.get("itemKey"),
+                        "Description": full_data.get("description"),
+                        "Image": full_data.get("image"),
+                        "ImageThumbnail": full_data.get("imageThumbnail"),
+                        "Brand": full_data.get("brand"),
+                        "BrandModel": full_data.get("brandModel")
+                    }
+                    all_data.append(limited_data)
 
         return jsonify(all_data)
 
