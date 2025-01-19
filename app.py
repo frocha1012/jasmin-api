@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import requests
 import time
 
@@ -22,6 +22,8 @@ ENDPOINT_ODATA_PRODUCTS = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/sal
 ENDPOINT_ITEM_KEY = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems"
 
 ENDPOINT_ODATA_INVOICES = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices/odata"
+
+ENDPOINT_POST = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices"
 
 # Global Token Variables
 ACCESS_TOKEN = None
@@ -214,5 +216,45 @@ def fetch_all_invoices():
 
 #########################################################################################################
 #########################################################################################################
+
+@app.route('/create_invoice', methods=['POST'])
+def create_invoice():
+    try:
+        # Get the access token
+        token = get_access_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        # Parse the incoming JSON data
+        data = request.get_json()
+
+        # Validate required fields
+        if not data or "buyerCustomerParty" not in data or "company" not in data or "documentLines" not in data:
+            return jsonify({"error": "Invalid input, required fields: buyerCustomerParty, company, documentLines"}), 400
+
+        # Construct the payload for the POST request
+        payload = {
+            "buyerCustomerParty": data["buyerCustomerParty"],
+            "company": data["company"],
+            "documentLines": data["documentLines"],
+        }
+
+        # Send the POST request to the Jasmin API
+        
+        response = requests.post(ENDPOINT_POST, headers=headers, json=payload)
+
+        # Return the response from the Jasmin API
+        if response.status_code == 201:
+            return jsonify({"message": "Invoice created successfully", "data": response.json()}), 201
+        else:
+            return jsonify({"error": response.text}), response.status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
