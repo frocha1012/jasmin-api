@@ -180,6 +180,9 @@ def fetch_all_invoices():
             buyer = invoice.get("buyerCustomerParty")
             total_value = invoice.get("payableAmount", {}).get("amount")
             document_lines = invoice.get("documentLines", [])
+            document_taxes = invoice.get("documentTaxes", [])
+
+            invoice_id = document_taxes[0].get("invoiceId") if document_taxes else None
 
             # Extract purchased items
             items = [
@@ -197,6 +200,7 @@ def fetch_all_invoices():
 
             # Add structured invoice data
             all_invoices.append({
+                "invoiceId": invoice_id,
                 "buyerCustomerParty": buyer,
                 "totalValue": total_value,
                 "totalItems": total_items,
