@@ -21,6 +21,8 @@ ENDPOINT_PARTY_KEY = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/customer
 ENDPOINT_ODATA_PRODUCTS = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems/extension/odata"
 ENDPOINT_ITEM_KEY = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems"
 
+ENDPOINT_ODATA_INVOICES = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices/odata"
+
 # Global Token Variables
 ACCESS_TOKEN = None
 TOKEN_EXPIRATION = 0
@@ -153,5 +155,60 @@ def fetch_all_data():
 #########################################################################################################
 #########################################################################################################
 
+@app.route('/fetch_all_invoices', methods=['GET'])
+def fetch_all_invoices():
+    try:
+        # Get the access token
+        token = get_access_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        # Fetch all invoices
+        response = requests.get(ENDPOINT_ODATA_INVOICES, headers=headers)
+        if response.status_code != 200:
+            return jsonify({"error": response.text}), response.status_code
+
+        data = response.json()
+        invoices = data.get("items", [])
+
+        # Extract relevant information from each invoice
+        all_invoices = []
+        for invoice in invoices:
+            # Extract metadata
+            buyer = invoice.get("buyerCustomerParty")
+            total_value = invoice.get("payableAmount", {}).get("amount")
+            document_lines = invoice.get("documentLines", [])
+
+            # Extract purchased items
+            items = [
+                {
+                    "itemID": line.get("salesItem"),
+                    "description": line.get("salesItemDescription"),
+                    "quantity": line.get("quantity"),
+                    "unitPrice": line.get("unitPrice", {}).get("amount"),
+                }
+                for line in document_lines
+            ]
+
+            # Calculate total items purchased
+            total_items = sum(item["quantity"] for item in items if item["quantity"])
+
+            # Add structured invoice data
+            all_invoices.append({
+                "buyerCustomerParty": buyer,
+                "totalValue": total_value,
+                "totalItems": total_items,
+                "items": items,
+            })
+
+        return jsonify(all_invoices)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#########################################################################################################
+#########################################################################################################
 if __name__ == '__main__':
     app.run(debug=True)
