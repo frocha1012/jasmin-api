@@ -15,13 +15,21 @@ BASE_URL = "https://my.jasminsoftware.com"
 TENANT = "329459"
 ORGANIZATION = "329459-0001"
 
-ENDPOINT_ODATA = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/customerParties/odata"
-ENDPOINT_PARTY_KEY = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/customerParties"
+UIPATH_TOKEN = "rt_6CD8F549A7D8E1211EE53273184DC60EE561CB7D9AB968D613AFBA1B82F89F58-1"
+NEXT_API_ENDPOINT = "https://cloud.uipath.com/ieopvfnsifp/DefaultTenant/orchestrator_/t/0b9b4c09-5998-4253-afba-11660f157d4c/send-invoice"
 
-ENDPOINT_ODATA_PRODUCTS = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems/extension/odata"
-ENDPOINT_ITEM_KEY = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems"
+ENDPOINT_ODATA = f"{
+    BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/customerParties/odata"
+ENDPOINT_PARTY_KEY = f"{
+    BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/customerParties"
 
-ENDPOINT_ODATA_INVOICES = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices/odata"
+ENDPOINT_ODATA_PRODUCTS = f"{
+    BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems/extension/odata"
+ENDPOINT_ITEM_KEY = f"{
+    BASE_URL}/api/{TENANT}/{ORGANIZATION}/salesCore/salesItems"
+
+ENDPOINT_ODATA_INVOICES = f"{
+    BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices/odata"
 
 ENDPOINT_POST = f"{BASE_URL}/api/{TENANT}/{ORGANIZATION}/billing/invoices"
 
@@ -30,6 +38,8 @@ ACCESS_TOKEN = None
 TOKEN_EXPIRATION = 0
 
 # Function to Get or Refresh Access Token
+
+
 def get_access_token():
     global ACCESS_TOKEN, TOKEN_EXPIRATION
     if ACCESS_TOKEN and time.time() < TOKEN_EXPIRATION:
@@ -48,10 +58,12 @@ def get_access_token():
         if response.status_code == 200:
             token_data = response.json()
             ACCESS_TOKEN = token_data["access_token"]
-            TOKEN_EXPIRATION = time.time() + token_data["expires_in"] - 60  # Add buffer
+            TOKEN_EXPIRATION = time.time(
+            ) + token_data["expires_in"] - 60  # Add buffer
             return ACCESS_TOKEN
         else:
-            raise Exception(f"Failed to fetch token: {response.status_code}, {response.text}")
+            raise Exception(f"Failed to fetch token: {
+                            response.status_code}, {response.text}")
     except requests.exceptions.RequestException as e:
         raise Exception(f"An error occurred while fetching the token: {e}")
 
@@ -59,6 +71,8 @@ def get_access_token():
 #########################################################################################################
 
 # Route to Fetch All Data (products) Automatically
+
+
 @app.route('/fetch_all_products', methods=['GET'])
 def fetch_all_products():
     try:
@@ -75,7 +89,8 @@ def fetch_all_products():
             return jsonify({"error": response.text}), response.status_code
 
         data = response.json()
-        item_keys = [item.get("itemKey") for item in data.get("items", []) if "itemKey" in item]
+        item_keys = [item.get("itemKey") for item in data.get(
+            "items", []) if "itemKey" in item]
 
         # Step 2: Fetch data for each item key
         all_data = []
@@ -96,7 +111,8 @@ def fetch_all_products():
                         "Brand": full_data.get("brand"),
                         "BrandModel": full_data.get("brandModel"),
                         "Price": next(
-                            (line.get("priceAmount", {}).get("amount") for line in full_data.get("priceListLines", []) if "priceAmount" in line),
+                            (line.get("priceAmount", {}).get("amount") for line in full_data.get(
+                                "priceListLines", []) if "priceAmount" in line),
                             None  # Default to None if no "amount" is found
                         )
                     }
@@ -111,6 +127,8 @@ def fetch_all_products():
 #########################################################################################################
 
 # Route to Fetch All Data (products) Automatically
+
+
 @app.route('/fetch_all_data', methods=['GET'])
 def fetch_all_data():
     try:
@@ -127,7 +145,8 @@ def fetch_all_data():
             return jsonify({"error": response.text}), response.status_code
 
         data = response.json()
-        party_keys = [item.get("partyKey") for item in data.get("items", []) if "partyKey" in item]
+        party_keys = [item.get("partyKey") for item in data.get(
+            "items", []) if "partyKey" in item]
 
         # Step 2: Fetch data for each party key
         all_data = []
@@ -157,6 +176,7 @@ def fetch_all_data():
 #########################################################################################################
 #########################################################################################################
 
+
 @app.route('/fetch_all_invoices', methods=['GET'])
 def fetch_all_invoices():
     try:
@@ -184,7 +204,8 @@ def fetch_all_invoices():
             document_lines = invoice.get("documentLines", [])
             document_taxes = invoice.get("documentTaxes", [])
 
-            invoice_id = document_taxes[0].get("invoiceId") if document_taxes else None
+            invoice_id = document_taxes[0].get(
+                "invoiceId") if document_taxes else None
 
             # Extract purchased items
             items = [
@@ -198,7 +219,8 @@ def fetch_all_invoices():
             ]
 
             # Calculate total items purchased
-            total_items = sum(item["quantity"] for item in items if item["quantity"])
+            total_items = sum(item["quantity"]
+                              for item in items if item["quantity"])
 
             # Add structured invoice data
             all_invoices.append({
@@ -216,6 +238,7 @@ def fetch_all_invoices():
 
 #########################################################################################################
 #########################################################################################################
+
 
 @app.route('/create_invoice', methods=['POST'])
 def create_invoice():
@@ -242,12 +265,36 @@ def create_invoice():
         }
 
         # Send the POST request to the Jasmin API
-        
         response = requests.post(ENDPOINT_POST, headers=headers, json=payload)
 
         # Return the response from the Jasmin API
         if response.status_code == 201:
-            return jsonify({"message": "Invoice created successfully", "data": response.json()}), 201
+            # Parse the response from Jasmin
+            jasmin_response = response.json()
+
+            # Construct a payload for the next API request
+            next_api_payload = {
+                "Arguments": {
+                    # Use the ID from Jasmin if available
+                    "invoiceId": "002",
+                    "email": "frocha.tts@gmail.com",
+                    "name": "Fernando Rocha",
+                }
+            }
+
+            # Send the POST request to the next API
+            next_api_headers = {
+                "Authorization": f"Bearer {UIPATH_TOKEN}",
+                "Content-Type": "application/json",
+            }
+            next_api_response = requests.post(
+                NEXT_API_ENDPOINT, headers=next_api_headers, json=next_api_payload)
+
+            # Check the response from the next API
+            if next_api_response.status_code == 202:
+                return jsonify({"message": "Invoice created and processed successfully", "data": jasmin_response}), 201
+            else:
+                return jsonify({"error": "Invoice created but failed to process", "details": next_api_response.text}), next_api_response.status_code
         else:
             return jsonify({"error": response.text}), response.status_code
 
@@ -256,6 +303,7 @@ def create_invoice():
 
 #########################################################################################################
 #########################################################################################################
+
 
 @app.route('/fetch_customer/<party_key>', methods=['GET'])
 def fetch_customer_by_party_key(party_key):
