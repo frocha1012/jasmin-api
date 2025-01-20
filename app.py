@@ -254,7 +254,48 @@ def create_invoice():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+#########################################################################################################
+#########################################################################################################
 
+@app.route('/fetch_customer/<party_key>', methods=['GET'])
+def fetch_customer_by_party_key(party_key):
+    try:
+        # Get the access token
+        token = get_access_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        # Construct the URL for the specific partyKey
+        specific_url = f"{ENDPOINT_PARTY_KEY}/{party_key}"
+        response = requests.get(specific_url, headers=headers)
+
+        # Check the response status
+        if response.status_code == 200:
+            full_data = response.json()
+            # Return the full customer data or a subset of fields
+            limited_data = {
+                "ID": full_data.get("partyKey"),
+                "Name": full_data.get("name"),
+                "Email": full_data.get("electronicMail"),
+                "Mobile": full_data.get("mobile"),
+                "CompanyTaxID": full_data.get("companyTaxID"),
+                "StreetName": full_data.get("streetName"),
+                "PostalZone": full_data.get("postalZone"),
+                "CityName": full_data.get("cityName"),
+                "Country": full_data.get("country"),
+            }
+            return jsonify(limited_data)
+        else:
+            return jsonify({"error": response.text}), response.status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#########################################################################################################
+#########################################################################################################
 
 if __name__ == '__main__':
     app.run(debug=True)
